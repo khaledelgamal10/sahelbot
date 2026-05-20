@@ -1,18 +1,43 @@
-let pairingSent = false;
+const {
+    default: makeWASocket,
+    useMultiFileAuthState,
+    fetchLatestBaileysVersion
+} = require("@whiskeysockets/baileys");
 
-sock.ev.on("connection.update", async (update) => {
-    const { connection } = update;
+const qrcode = require("qrcode-terminal");
+const pino = require("pino");
 
-    if (connection === "open") {
-        console.log("✅ Bot Connected");
-    }
+async function startBot() {
 
-    // اطلب pairing code مرة واحدة فقط لما يكون لسه مش مسجل
-    if (!pairingSent && !sock.authState.creds.registered) {
-        pairingSent = true;
+    const { state, saveCreds } = await useMultiFileAuthState("auth");
+    const { version } = await fetchLatestBaileysVersion();
 
+    const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: "silent" })
+    });
+
+    // حفظ السيشن
+    sock.ev.on("creds.update", saveCreds);
+
+    // QR + Connection
+    sock.ev.on("connection.update", ({ connection, qr }) => {
+
+        if (qr) {
+            console.log("📱 QR (ignored - using pairing code)");
+        }
+
+        if (connection === "open") {
+            console.log("✅ Bot Connected");
+        }
+    });
+
+    // 🔥 Pairing Code (Fixed)
+    setTimeout(async () => {
         try {
-            const phoneNumber = "201055855696"; // رقمك بدون +
+            const phoneNumber = "201055855696"; // رقمك
 
             const code = await sock.requestPairingCode(phoneNumber);
 
@@ -22,8 +47,7 @@ sock.ev.on("connection.update", async (update) => {
         } catch (err) {
             console.log("❌ Pairing Error:", err.message);
         }
-    }
-});
+    }, 5000);
 
 
 
