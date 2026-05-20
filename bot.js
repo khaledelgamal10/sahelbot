@@ -1,10 +1,10 @@
 const {
     default: makeWASocket,
     useMultiFileAuthState,
-    fetchLatestBaileysVersion
+    fetchLatestBaileysVersion,
+    DisconnectReason
 } = require("@whiskeysockets/baileys");
 
-const qrcode = require("qrcode-terminal");
 const pino = require("pino");
 
 async function startBot() {
@@ -19,90 +19,86 @@ async function startBot() {
         logger: pino({ level: "silent" })
     });
 
-    // حفظ السيشن
     sock.ev.on("creds.update", saveCreds);
 
-    // QR + Connection
-    sock.ev.on("connection.update", ({ connection, qr }) => {
+    // =========================
+    // pairing control
+    // =========================
+    let pairingSent = false;
 
-        if (qr) {
-            console.log("📱 QR (ignored - using pairing code)");
-        }
+    sock.ev.on("connection.update", async (update) => {
+        const { connection } = update;
 
         if (connection === "open") {
             console.log("✅ Bot Connected");
         }
+
+        // نطلب pairing code مرة واحدة فقط بعد التشغيل
+        if (!state.creds.registered && !pairingSent) {
+            pairingSent = true;
+
+            setTimeout(async () => {
+                try {
+                    const phoneNumber = "201055855696";
+
+                    const code = await sock.requestPairingCode(phoneNumber);
+
+                    console.log("🔑 Pairing Code:", code);
+
+                } catch (err) {
+                    console.log("❌ Pairing Error:", err.message);
+                    pairingSent = false; // لو فشل يعيد المحاولة
+                }
+            }, 5000);
+        }
+
+        if (connection === "close") {
+            console.log("❌ Connection closed - restarting...");
+            startBot(); // restart auto
+        }
     });
 
-    // 🔥 Pairing Code (Fixed)
-    setTimeout(async () => {
-        try {
-            const phoneNumber = "201055855696"; // رقمك
-
-            const code = await sock.requestPairingCode(phoneNumber);
-
-            console.log("🔑 Pairing Code:");
-            console.log(code);
-
-        } catch (err) {
-            console.log("❌ Pairing Error:", err.message);
-        }
-    }, 5000);
-
-    // تخزين حالة كل مستخدم
+    // =========================
+    // states
+    // =========================
     const userState = {};
-
-    // Anti spam
     const userLock = {};
 
-    // استقبال الرسائل
+    // =========================
+    // messages
+    // =========================
     sock.ev.on("messages.upsert", async ({ messages }) => {
 
         const msg = messages[0];
-
         if (!msg.message) return;
 
         const user = msg.key.remoteJid;
 
-//--------------------------------------------
+        // تجاهل الجروبات
+        if (user.endsWith("@g.us")) return;
 
+        // =========================
+        // رقم المستخدم بشكل صحيح
+        // =========================
+        const userNumber = user.replace("@s.whatsapp.net", "").replace("@lid", "");
 
-console.log(user);
+        console.log("USER:", userNumber);
 
-// تجاهل الجروبات
-if (user.endsWith("@g.us")) return;
+        // =========================
+        // BLOCK LIST
+        // =========================
+        const blockedNumbers = [
+            // "201234567890"
+        ];
 
-// استخراج الرقم
-const userNumber = user.replace("@lid", "");
+        if (blockedNumbers.includes(userNumber)) {
+            console.log("BLOCKED:", userNumber);
+            return;
+        }
 
-console.log("USER:", userNumber);
-
-
-
-
-// =========================
-// BLOCKED NUMBERS
-// =========================
-
-const blockedNumbers = [
-  //  "30228197957871"
-];
-
-// منع الأرقام
-if (blockedNumbers.includes(userNumber)) {
-
-    console.log("BLOCKED USER:", userNumber);
-
-    return;
-}
-
-
-
-
-
-
-
-        // قراءة النص
+        // =========================
+        // text extract
+        // =========================
         let text =
             msg.message.conversation ||
             msg.message.extendedTextMessage?.text ||
@@ -110,17 +106,13 @@ if (blockedNumbers.includes(userNumber)) {
 
         text = text.trim();
 
-        // استخراج الأرقام فقط
         const clean = text.replace(/[^0-9]/g, "");
 
-        // منع السبام
+        // anti spam
         if (userLock[user]) return;
 
         userLock[user] = true;
-
-        setTimeout(() => {
-            userLock[user] = false;
-        }, 500);
+        setTimeout(() => (userLock[user] = false), 700);
 
         // =========================
         // أول رسالة
