@@ -12,22 +12,12 @@ async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState("auth");
     const { version } = await fetchLatestBaileysVersion();
 
-const sock = makeWASocket({
-    version,
-    auth: state,
-    printQRInTerminal: false,
-    logger: pino({ level: "silent" })
-});
-
-
-if (!sock.authState.creds.registered) {
-    const phoneNumber = "201055855696"; // رقمك هنا بدون +
-    
-    setTimeout(async () => {
-        const code = await sock.requestPairingCode(phoneNumber);
-        console.log("🔑 Pairing Code:", code);
-    }, 3000);
-}
+    const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: "silent" })
+    });
 
     // حفظ السيشن
     sock.ev.on("creds.update", saveCreds);
@@ -36,14 +26,28 @@ if (!sock.authState.creds.registered) {
     sock.ev.on("connection.update", ({ connection, qr }) => {
 
         if (qr) {
-            console.log("📱 Scan QR:");
-            qrcode.generate(qr, { small: true });
+            console.log("📱 QR (ignored - using pairing code)");
         }
 
         if (connection === "open") {
             console.log("✅ Bot Connected");
         }
     });
+
+    // 🔥 Pairing Code (Fixed)
+    setTimeout(async () => {
+        try {
+            const phoneNumber = "201055855696"; // رقمك
+
+            const code = await sock.requestPairingCode(phoneNumber);
+
+            console.log("🔑 Pairing Code:");
+            console.log(code);
+
+        } catch (err) {
+            console.log("❌ Pairing Error:", err.message);
+        }
+    }, 5000);
 
     // تخزين حالة كل مستخدم
     const userState = {};
@@ -58,12 +62,9 @@ if (!sock.authState.creds.registered) {
 
         if (!msg.message) return;
 
-const user = msg.key.remoteJid;
+        const user = msg.key.remoteJid;
 
-
-
-//sock
-
+//--------------------------------------------
 
 
 console.log(user);
