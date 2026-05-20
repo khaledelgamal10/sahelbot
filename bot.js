@@ -12,11 +12,22 @@ async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState("auth");
     const { version } = await fetchLatestBaileysVersion();
 
-    const sock = makeWASocket({
-        version,
-        auth: state,
-        logger: pino({ level: "silent" })
-    });
+const sock = makeWASocket({
+    version,
+    auth: state,
+    printQRInTerminal: false,
+    logger: pino({ level: "silent" })
+});
+
+
+if (!sock.authState.creds.registered) {
+    const phoneNumber = "201055855696"; // رقمك هنا بدون +
+    
+    setTimeout(async () => {
+        const code = await sock.requestPairingCode(phoneNumber);
+        console.log("🔑 Pairing Code:", code);
+    }, 3000);
+}
 
     // حفظ السيشن
     sock.ev.on("creds.update", saveCreds);
@@ -51,7 +62,7 @@ const user = msg.key.remoteJid;
 
 
 
-
+//sock
 
 
 
