@@ -15,5 +15,14 @@
     "puppeteer": "^25.0.4",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.34.7"
-  }
+  },
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/khaledelgamal10/sahelbot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/khaledelgamal10/sahelbot/issues"
+  },
+  "homepage": "https://github.com/khaledelgamal10/sahelbot#readme"
 }

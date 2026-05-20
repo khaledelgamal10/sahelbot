@@ -1081,6 +1081,6 @@ if (state.step === "jetski_ar") {
 
     });
 
-}
+
 
 startBot();
