@@ -61,13 +61,11 @@ async function startBot() {
 // ADMIN SETTINGS
 // =========================
 
-const ADMIN_NUMBER = "201055855696@s.whatsapp.net";
 
 // العملاء الموقوفين
 const pausedUsers = {};
 
-// انتظار ملاحظة
-const waitingNote = {};
+
 
 
     // =========================
