@@ -6,7 +6,7 @@ const {
 
 const qrcode = require("qrcode-terminal");
 const pino = require("pino");
-
+//qr_en
 async function startBot() {
 
     const { state, saveCreds } = await useMultiFileAuthState("auth");
@@ -51,6 +51,19 @@ async function startBot() {
     // =========================
     // MESSAGES
     // =========================
+
+
+// =========================
+// ADMIN NUMBER
+// =========================
+
+const ADMIN_NUMBER = "201055855696@s.whatsapp.net";
+
+// waiting note
+const waitingNote = {};
+
+
+
     sock.ev.on("messages.upsert", async ({ messages }) => {
 
         const msg = messages[0];
@@ -83,6 +96,37 @@ async function startBot() {
         text = text.trim();
 
         const clean = text.replace(/[^0-9]/g, "");
+
+// =========================
+// NOTE MODE
+// =========================
+
+if (waitingNote[user]) {
+
+    await sock.sendMessage(ADMIN_NUMBER, {
+        text:
+`📩 New Note
+
+👤 Number:
+${userNumber}
+
+📝 Message:
+${text}`
+    });
+
+    waitingNote[user] = false;
+
+    await sock.sendMessage(user, {
+        text:
+`✅ شكراً ليك
+
+تم استلام رسالتك وهيتم التواصل معاك في أقرب وقت ❤️`
+    });
+
+    return;
+}
+
+
 
         // anti spam بسيط
         if (userLock[user]) return;
@@ -132,7 +176,8 @@ Please choose your language:
 5️⃣ المطاعم
 6️⃣ إيجار السيارات
 7️⃣ توصيل من والي مطار العلمين
-8️⃣ السياسات والشروط`
+8️⃣ السياسات والشروط
+9️⃣ سيب ملحوظة`
                 });
 
                 return;
@@ -153,7 +198,8 @@ Please choose your language:
 5️⃣ Restaurants
 6️⃣ Car rentals
 7️⃣ Airport pick up and drop off
-8️⃣ Terms and Policies`
+8️⃣ Terms and Policies
+9️⃣ Leave a note`
                 });
 
                 return;
@@ -193,6 +239,7 @@ Please choose your language:
 5️⃣ Hacienda-Bay
 6️⃣ Hacinda-White
 7️⃣ Mountain view ras elhekma
+9️⃣ Proceed To Pay
 0️⃣ Back`
                 });
 
@@ -306,6 +353,22 @@ Coming Soon...
                 return;
             }            
 
+// Leave Note
+else if (clean === "9") {
+
+    waitingNote[user] = true;
+
+    await sock.sendMessage(user, {
+        text:
+`📝 Leave your note
+
+Please type your message and it will be sent to customer service ❤️`
+    });
+
+    return;
+}
+
+
             //Back
             else {
 
@@ -320,7 +383,8 @@ Coming Soon...
 5️⃣ Restaurants
 6️⃣ Car rentals
 7️⃣ Airport pick up and drop off
-8️⃣ Terms and Policies`
+8️⃣ Terms and Policies
+9️⃣ Leave a note`
 
                 });
 
@@ -445,6 +509,31 @@ NOT AVAILABLE AT THE MOMENT`
                 });
                 return;
             }
+// Payment
+else if (clean === "9") {
+
+    userLock[user] = true;
+
+    await sock.sendMessage(ADMIN_NUMBER, {
+        text:
+`💰 New Payment Request
+
+👤 Number:
+${userNumber}
+
+📍 User is ready to pay.`
+    });
+
+    await sock.sendMessage(user, {
+        text:
+`✅ Customer service has been notified.
+
+Please wait till we contact you ❤️`
+    });
+
+    return;
+}
+
             // Back
             else if (clean === "0") {
 
@@ -456,11 +545,13 @@ NOT AVAILABLE AT THE MOMENT`
 
 1️⃣ QR Prices
 2️⃣ Jetski & Yachts
-3️⃣ Hotels reservations
-4️⃣ Restaurants
-5️⃣ Car rentals
-6️⃣ Airport pick up and drop off
-7️⃣ Terms and Policies`
+3️⃣ Chalets & Villas
+4️⃣ Hotels reservations
+5️⃣ Restaurants
+6️⃣ Car rentals
+7️⃣ Airport pick up and drop off
+8️⃣ Terms and Policies
+9️⃣ Leave a note`
                 });
 
                 return;
@@ -479,6 +570,7 @@ NOT AVAILABLE AT THE MOMENT`
 5️⃣ Hacienda-Bay
 6️⃣ Hacinda-White
 7️⃣ Mountain view ras elhekma
+9️⃣ Proceed To Pay
 0️⃣ Back`
                 });
 
@@ -562,11 +654,13 @@ Includes Safi Beach access for the whole day`
 
 1️⃣ QR Prices
 2️⃣ Jetski & Yachts
-3️⃣ Hotels reservations
-4️⃣ Restaurants
-5️⃣ Car rentals
-6️⃣ Airport pick up and drop off
-7️⃣ Terms and Policies`
+3️⃣ Chalets & Villas
+4️⃣ Hotels reservations
+5️⃣ Restaurants
+6️⃣ Car rentals
+7️⃣ Airport pick up and drop off
+8️⃣ Terms and Policies
+9️⃣ Leave a note`
                 });
 
                 return;
@@ -616,6 +710,7 @@ if (state.step === "main_ar") {
 5️⃣ هاسيندا باي
 6️⃣ هاسيندا وايت
 7️⃣ ماونتن ڤيو رأس الحكمة
+9️⃣ الدفع
 0️⃣ رجوع`
         });
 
@@ -740,6 +835,24 @@ if (state.step === "main_ar") {
 
         return;
     }
+
+
+
+
+    // Leave Note
+else if (clean === "9") {
+
+    waitingNote[user] = true;
+
+    await sock.sendMessage(user, {
+        text:
+`📝 سيب ملحوظتك
+
+ابعت رسالتك وهتوصل لخدمة العملاء ❤️`
+    });
+
+    return;
+}
 //----------------
 
     else {
@@ -755,7 +868,8 @@ if (state.step === "main_ar") {
 5️⃣ المطاعم
 6️⃣ إيجار السيارات
 7️⃣ توصيل من والي مطار العلمين
-8️⃣ السياسات والشروط`
+8️⃣ السياسات والشروط
+9️⃣ سيب ملحوظة`
         });
 
         return;
@@ -800,7 +914,7 @@ if (state.step === "qr_ar") {
         });
 
         await sock.sendMessage(user, {
-            text: "0️⃣ القائمه الرئيسيه"
+            text: `0️⃣ القائمه الرئيسيه`
         });
 
         return;
@@ -899,6 +1013,31 @@ if (state.step === "qr_ar") {
         return;
     }
 
+// Payment
+else if (clean === "9") {
+
+    userLock[user] = true;
+
+    await sock.sendMessage(ADMIN_NUMBER, {
+        text:
+`💰 طلب دفع جديد
+
+👤 الرقم:
+${userNumber}
+
+📍 العميل جاهز للدفع`
+    });
+
+    await sock.sendMessage(user, {
+        text:
+`✅ تم إبلاغ خدمة العملاء
+
+برجاء انتظار التواصل معك ❤️`
+    });
+
+    return;
+}
+
     // رجوع
     else if (clean === "0") {
 
@@ -915,7 +1054,8 @@ if (state.step === "qr_ar") {
 5️⃣ المطاعم
 6️⃣ إيجار السيارات
 7️⃣ توصيل من والي مطار العلمين
-8️⃣ السياسات والشروط`
+8️⃣ السياسات والشروط
+9️⃣ سيب ملحوظة`
         });
 
         return;
@@ -934,6 +1074,7 @@ if (state.step === "qr_ar") {
 5️⃣ هاسيندا باي
 6️⃣ هاسيندا وايت
 7️⃣ ماونتن ڤيو رأس الحكمة
+9️⃣ الدفع
 0️⃣ رجوع`
         });
 
@@ -1029,7 +1170,8 @@ if (state.step === "jetski_ar") {
 5️⃣ المطاعم
 6️⃣ إيجار السيارات
 7️⃣ توصيل من والي مطار العلمين
-8️⃣ السياسات والشروط`
+8️⃣ السياسات والشروط
+9️⃣ سيب ملحوظة`
         });
 
         return;
