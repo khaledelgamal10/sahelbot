@@ -1,3 +1,11 @@
+/*
+
+const clean = text.replace(/[^0-9]/g, "");
+
+
+
+*/
+
 const {
     default: makeWASocket,
     useMultiFileAuthState,
@@ -48,6 +56,20 @@ async function startBot() {
     const userState = {};
     const userLock = {};
 
+
+// =========================
+// ADMIN SETTINGS
+// =========================
+
+const ADMIN_NUMBER = "201055855696@s.whatsapp.net";
+
+// العملاء الموقوفين
+const pausedUsers = {};
+
+// انتظار ملاحظة
+const waitingNote = {};
+
+
     // =========================
     // MESSAGES
     // =========================
@@ -72,6 +94,8 @@ const waitingNote = {};
         const user = msg.key.remoteJid;
         if (!user) return;
 
+// تجاهل رسائل البوت نفسه
+if (msg.key.fromMe) return;
         // تجاهل الجروبات
         if (user.endsWith("@g.us")) return;
 
@@ -97,6 +121,121 @@ const waitingNote = {};
 
         const clean = text.replace(/[^0-9]/g, "");
 
+// =========================
+// ADMIN PANEL FROM WHATSAPP
+// =========================
+
+if (user === ADMIN_NUMBER) {
+
+    // إيقاف عميل
+    // مثال:
+    // pause 201055555555
+
+    if (text.startsWith("pause ")) {
+
+        const target =
+            text.replace("pause ", "").trim() +
+            "@s.whatsapp.net";
+
+        pausedUsers[target] = true;
+
+        await sock.sendMessage(user, {
+            text:
+`⛔ Client paused successfully`
+        });
+
+        return;
+    }
+
+    // تشغيل عميل
+    // مثال:
+    // resume 201055555555
+
+    if (text.startsWith("resume ")) {
+
+        const target =
+            text.replace("resume ", "").trim() +
+            "@s.whatsapp.net";
+
+        pausedUsers[target] = false;
+
+        await sock.sendMessage(target, {
+            text:
+`✅ تم استكمال المحادثة
+
+📋 اكتب 0 للرجوع للقائمة الرئيسية`
+        });
+
+        await sock.sendMessage(user, {
+            text:
+`✅ Client resumed successfully`
+        });
+
+        return;
+    }
+
+    // إرسال رسالة لعميل
+    // مثال:
+    // send 201055555555 اهلا بيك
+
+    if (text.startsWith("send ")) {
+
+        const args = text.split(" ");
+
+        const number = args[1];
+
+        const message =
+            text.split(" ").slice(2).join(" ");
+
+        await sock.sendMessage(
+            number + "@s.whatsapp.net",
+            {
+                text: message
+            }
+        );
+
+        await sock.sendMessage(user, {
+            text:
+`✅ Message sent successfully`
+        });
+
+        return;
+    }
+}
+
+// =========================
+// ADMIN COMMANDS
+// =========================
+
+// resume 2010xxxx
+if (user === ADMIN_NUMBER && text.startsWith("resume ")) {
+
+    const target = text.replace("resume ", "").trim();
+
+    pausedUsers[target + "@s.whatsapp.net"] = false;
+
+    await sock.sendMessage(
+        target + "@s.whatsapp.net",
+        {
+            text:
+`✅ تم استكمال المحادثة مع خدمة العملاء
+
+📋 اكتب 0 للرجوع للقائمة الرئيسية`
+        }
+    );
+
+    return;
+}
+
+// pause 2010xxxx
+if (user === ADMIN_NUMBER && text.startsWith("pause ")) {
+
+    const target = text.replace("pause ", "").trim();
+
+    pausedUsers[target + "@s.whatsapp.net"] = true;
+
+    return;
+}
 // =========================
 // NOTE MODE
 // =========================
@@ -132,7 +271,13 @@ ${text}`
         if (userLock[user]) return;
         userLock[user] = true;
         setTimeout(() => delete userLock[user], 1000);
+// =========================
+// USER PAUSED
+// =========================
 
+if (pausedUsers[user]) {
+    return;
+}
         // =========================
         // FIRST MESSAGE
         // =========================
@@ -153,6 +298,36 @@ Please choose your language:
 
             return;
         }
+
+// =========================
+// WAITING NOTE
+// =========================
+
+if (waitingNote[user]) {
+
+    waitingNote[user] = false;
+
+    await sock.sendMessage(ADMIN_NUMBER, {
+        text:
+`📩 New Note
+
+👤 Client:
+${userNumber}
+
+📝 Message:
+${text}`
+    });
+
+    await sock.sendMessage(user, {
+        text:
+`✅ شكراً ليك
+
+📩 تم استلام رسالتك وهيتم التواصل معاك في أقرب وقت`
+    });
+
+    return;
+}
+
 
         const state = userState[user];
 
