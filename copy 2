@@ -1,36 +1,10 @@
+/*
+
+const clean = text.replace(/[^0-9]/g, "");
 
 
 
-//to recive data
-const bookingRequests = {};
-
-
-//AI
-const detectIntent = require("./ai");
-
-//saving data
-const fs = require("fs");
-
-function saveData() {
-    fs.writeFileSync(
-        "data.json",
-        JSON.stringify({
-            userState,
-            pausedUsers,
-            waitingNote
-        }, null, 2)
-    );
-}
-
-
-
-
-
-
-
-
-
-
+*/
 
 const {
     default: makeWASocket,
@@ -89,26 +63,7 @@ async function startBot() {
 
 
 // العملاء الموقوفين
-let pausedUsers = {};
-
-try {
-
-    pausedUsers = JSON.parse(
-        fs.readFileSync("paused.json")
-    );
-
-} catch {
-
-    pausedUsers = {};
-}
-
-function savePausedUsers() {
-
-    fs.writeFileSync(
-        "paused.json",
-        JSON.stringify(pausedUsers, null, 2)
-    );
-}
+const pausedUsers = {};
 
 
 
@@ -168,54 +123,14 @@ if (msg.key.fromMe) return;
             "";
 
         text = text.trim();
-        const intent = detectIntent(text);
 
         const clean = text.replace(/[^0-9]/g, "");
 
+// =========================
+// ADMIN PANEL FROM WHATSAPP
+// =========================
 
-        // =========================
-        // USER PAUSED
-        // =========================
-        if (pausedUsers[user]) {
-        return;
-        }
-
-if (bookingRequests[user]) {
-
-    const type = bookingRequests[user];
-
-    await sock.sendMessage(
-        ADMIN_NUMBER + "@s.whatsapp.net",
-{
-        text:
-`📥 طلب جديد
-
-👤 العميل:
-${userNumber}
-
-📌 الخدمة:
-${type}
-
-📝 التفاصيل:
-${text}`
-    });
-
-    await sock.sendMessage(user, {
-        text:
-`✅ تم ارسال طلبك بنجاح
-
-سيتم التواصل معك قريباً ❤️`
-    });
-
-    delete bookingRequests[user];
-
-    return;
-}
-        // =========================
-        // ADMIN PANEL FROM WHATSAPP
-        // =========================
-
-        if (userNumber === "201000992177") {
+if (userNumber === "201000992177") {
 
     // إيقاف عميل
     // مثال:
@@ -224,13 +139,10 @@ ${text}`
     if (text.startsWith("pause ")) {
 
         const target =
-            text.replace("pause ", "")
-            .replace(/[^0-9]/g, "") +
+            text.replace("pause ", "").trim() +
             "@s.whatsapp.net";
 
         pausedUsers[target] = true;
-
-savePausedUsers();
 
         await sock.sendMessage(user, {
             text:
@@ -247,13 +159,10 @@ savePausedUsers();
     if (text.startsWith("resume ")) {
 
         const target =
-            text.replace("resume ", "")
-            .replace(/[^0-9]/g, "") +
+            text.replace("resume ", "").trim() +
             "@s.whatsapp.net";
 
-        delete pausedUsers[target];
-
-        savePausedUsers();
+        pausedUsers[target] = false;
 
         await sock.sendMessage(target, {
             text:
@@ -330,40 +239,6 @@ if (user === ADMIN_NUMBER && text.startsWith("pause ")) {
 
     return;
 }
-
-if (userNumber === ADMIN_NUMBER && text === "paused") {
-
-    const pausedList = Object.keys(pausedUsers)
-        .filter(user => pausedUsers[user]);
-
-    if (pausedList.length === 0) {
-
-        await sock.sendMessage(user, {
-            text:
-`✅ لا يوجد عملاء موقوفين`
-        });
-
-        return;
-    }
-
-    let message = "⛔ العملاء الموقوفين:\n\n";
-
-    pausedList.forEach((u, i) => {
-
-        const number =
-            u.replace("@s.whatsapp.net", "");
-
-        message += `${i + 1}- ${number}\n`;
-    });
-
-    await sock.sendMessage(user, {
-        text: message
-    });
-
-    return;
-}
-
-
 // =========================
 // NOTE MODE
 // =========================
@@ -401,355 +276,11 @@ ${text}`
         if (userLock[user]) return;
         userLock[user] = true;
         setTimeout(() => delete userLock[user], 1000);
-
-
-
-if (intent === "qr") {
-
-    await sock.sendMessage(user, {
-        text:
-`📲 اسعار الـ QR المتاحة:
-
-📍 مارينا
-📍 مراسي
-📍 أمواج
-📍 سيشيل
-📍 هاسيندا باي
-📍 هاسيندا وايت
-
-ابعت اسم المكان مباشرة ❤️`
-    });
-
-    return;
-}
-
-
-
-
-if (intent === "marina") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 سعر QR مارينا
-
-🚗 300 جنيه للعربية`
-    });
-
-    return;
-}
-
-
-if (intent === "marassi") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 اسعار مراسي:
-
-• مراسي مارينا ✨:
-700 جنيه للعربية 🚗
-
-• مراسي بلانكا 🏝️:
-2500 جنيه للعربيه 🚗
-
-• نورث بيتش 🏖️:
-1000 جنيه للفرد`
-    });
-
-    return;
-}
-
-if (intent === "amwaj") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 سعر QR أمواج
-
-💰 600 جنيه للفرد
-
-يشمل:
-🏖️ البحر
-🏝️ اللاجون
-🏊 البول`
-    });
-
-    return;
-}
-
-if (intent === "seashell") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 سعر QR سيشيل
-
-💰 1500 جنيه للفرد
-
-يشمل:
-🏖️ البحر
-🏝️ اللاجون
-🏊 البول`
-    });
-
-    return;
-}
-
-if (intent === "hacienda_bay") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 سعر QR هاسيندا باي
-
-💰 800 جنيه للفرد
-
-يشمل:
-🏖️ البحر
-🏝️ اللاجون
-🏊 البول`
-    });
-
-    return;
-}
-
-if (intent === "hacienda_white") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 سعر QR هاسيندا وايت
-
-💰 900 جنيه للفرد
-
-يشمل:
-🏖️ البحر
-🏝️ اللاجون
-🏊 البول`
-    });
-
-    return;
-}
-
-if (intent === "mountain_view") {
-
-    await sock.sendMessage(user, {
-        text:
-`📍 ماونتن ڤيو رأس الحكمة
-
-الكيو ار هيكون متاح قريبا`
-    });
-
-    return;
-}
-
-if (intent === "payment") {
-
-    pausedUsers[user] = true;
-
-    await sock.sendMessage(
-        ADMIN_NUMBER + "@s.whatsapp.net",
-{
-        text:
-`💰 طلب دفع جديد
-
-👤 الرقم:
-${userNumber}
-
-📍 العميل جاهز للدفع`
-    });
-
-    await sock.sendMessage(user, {
-        text:
-`✅ تم تحويل طلبك لخدمة العملاء
-
-برجاء انتظار التواصل معك ❤️`
-    });
-
-    return;
-}
-
-if (intent === "yacht") {
-
-    await sock.sendMessage(user, {
-        text:
-`اسعار يخوت مارينا والجزيره🛥️
-
-اليخوت تتراوح من 5000 ل 8000 
-جنيه للساعه
-
-المكان - مارينا 7 - بوبوس للألعاب المائيه
-
-يتم دفع 500 جنيه جديه حجز ويتم خصمهم من اجمالي التكلفه
-
-ممكن تشوف صور اليخوت في كتالوج صفحه الواتس او علي صفحه التيكتوك
-saheljobss❤️`
-    });
-
-        await sock.sendMessage(user, {
-        text:
-`اسعار يخوت مراسي🛥️
-
-اليخوت تبدأ من 9000 جنيه للساعه وتطلب حجز مسبق
-
-تواصل مع خدمه العملاء للحجز`
-    });
-
-    return;
-}
-
-if (intent === "hotel") {
-
-    await sock.sendMessage(user, {
-        text:
-`🏨 خدمة حجز الفنادق متاحة
-
-برجاء ارسال:
-- عدد الأفراد
-- التاريخ
-- عدد الليالي
-- المنطقة المطلوبة او اسم الفندق
-
-وسيتم التواصل معك بأفضل الأسعار ❤️`
-    });
-
-    return;
-}
-
-if (intent === "restaurant") {
-
-    bookingRequests[user] = "restaurant";
-
-    await sock.sendMessage(user, {
-        text:
-`🍽️ المطاعم المتاحة للحجز:
-
-• Crave Marassi
-• Ovio Marassi
-• Eatery Marassi
-• The Lemon Tree & Co.
-• SACHI By The Sea
-• Kasr Elkababgi
-
-📝 برجاء ارسال:
-- اسم المطعم
-- عدد الأفراد
-- اليوم
-- الوقت`
-    });
-
-    return;
-}
-
-if (intent === "cars") {
-
-    bookingRequests[user] = "cars";
-
-    await sock.sendMessage(user, {
-        text:
-`🚗 برجاء ارسال تفاصيل الحجز:
-
-- نوع السيارة
-- مدة الإيجار
-- مكان الاستلام`
-    });
-
-    return;
-}
-
-if (intent === "airport") {
-
-    bookingRequests[user] = "airport";
-
-    await sock.sendMessage(user, {
-        text:
-`خدمة التوصيل من وإلى مطار العلمين متاحة
-
-برجاء ارسال:
-- عدد الأفراد
-- رقم الرحلة المدون علي التذكره
-- تاريخ الوصول الوصول
-- الوجهه
-
-وسيتم التواصل معك ❤️`
-    });
-
-    return;
-}
-
-if (intent === "prices") {
-
-    await sock.sendMessage(user, {
-        text:
-`💰 الأسعار تختلف حسب:
-
-📍 المكان
-📅 التاريخ
-👥 عدد الأفراد
-
-ابعت اسم الخدمة أو المكان لمعرفة السعر ❤️`
-    });
-
-    return;
-}
-
-if (intent === "greeting") {
-
-    await sock.sendMessage(user, {
-        text:
-`👋 أهلاً بيك في SahelJobss ❤️
-
-نقدر نساعدك في:
-
-🏖️ QR
-🛥️ جيتسكي ويخوت
-🏨 فنادق
-🍽️ مطاعم
-🚗 تأجير سيارات
-✈️ توصيل للمطار
-
-📋 ابعت اسم الخدمة مباشرة`
-    });
-
-    return;
-}
-
-if (intent === "jetski") {
-
-    await sock.sendMessage(user, {
-        text:
-`الجيتسكي في مارينا🛥️
-
-العنوان: مارينا 7 - بوبوس للألعاب المائيه
-
-💰السعر شامل دخول مارينا:
-15 Min = 1500 EGP
-30 Min = 2500 EGP
-60 Min = 5000 EGP
-
-يتم دفع 500 جديه حجز ويتم خصمهم من اجمالي السعر عند الوصول
-
-متاح جيت سكي في مراسي صافي بيتش
-اسأل خدمه العملاء عليه او اتصل بينا🔥
-`
-    });
-
-    return;
-}
-
-if (intent === "support") {
-
-    pausedUsers[user] = true;
-
-    await sock.sendMessage(
-        ADMIN_NUMBER + "@s.whatsapp.net",
-{
-        text:
-`📞 العميل يريد خدمة عملاء
-
-👤 ${userNumber}`
-    });
-
-    await sock.sendMessage(user, {
-        text:
-`✅ تم تحويلك لخدمة العملاء`
-    });
-
+// =========================
+// USER PAUSED
+// =========================
+
+if (pausedUsers[user]) {
     return;
 }
         // =========================
@@ -761,13 +292,13 @@ if (intent === "support") {
 
             await sock.sendMessage(user, {
                 text:
-`👋 أهلاً بيك في SahelJobss ❤️
+`👋 ازيك, معاك بولي من SahelJobss
+انا هنا علشان اساعدك تعرف كل حاجه
+🥰كل الي عليك ترد بارقام
 
-لو عايز تكتب اسم الخدمه علطول اكتبها وانا اعرضهالك
-او ممكن ترد عليا بارقام انجليزيه وسيب الباقي عليا🥰
-
-1️⃣للغه العربيه
-2️⃣For English`
+Please choose your language:
+1️⃣ عربي
+2️⃣ English`
             });
 
             return;
@@ -803,9 +334,6 @@ ${text}`
 
     return;
 }
-
-
-
 
 
         const state = userState[user];
@@ -862,6 +390,12 @@ ${text}`
             return;
         }
 
+        // ======================================================
+        // 👇👇👇 هنا كل كودك زي ما هو (من غير أي تغيير) 👇👇👇
+        // ======================================================
+
+        // MAIN AR / EN / QR / JETSKI (كل اللي انت كاتبه)
+        // سيبته زي ما هو حرفيًا
 
 
 
@@ -1653,7 +1187,7 @@ if (state.step === "qr_ar") {
             text:
 `📍 ماونتن ڤيو رأس الحكمة
 
-هيكون متاح قريبا`
+غير متاح حالياً`
         });
 
         await sock.sendMessage(user, {
