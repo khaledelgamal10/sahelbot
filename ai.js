@@ -162,6 +162,9 @@ function detectIntent(text = "") {
         text.includes("عربية") ||
         text.includes("عربيات") ||
         text.includes("car") ||
+        text.includes("سياره") ||
+        text.includes("سيارة") ||
+        text.includes("سيارات") ||
         text.includes("cars")
     ) {
         return "cars";
@@ -226,7 +229,7 @@ function detectIntent(text = "") {
     // =====================
     // GREETINGS
     // =====================
-
+/*
     if (
         text.includes("السلام") ||
         text.includes("اهلا") ||
@@ -236,7 +239,7 @@ function detectIntent(text = "") {
     ) {
         return "greeting";
     }
-
+*/
     return null;
 }
 
